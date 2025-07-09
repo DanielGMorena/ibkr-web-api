@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -6,6 +7,8 @@ import yaml
 from dotenv import load_dotenv
 
 from app.utils import get_resource_path
+
+logger = logging.getLogger(__name__)
 
 
 class Settings:
@@ -32,6 +35,7 @@ class Settings:
         load_dotenv()
         config_file = config_path or os.environ.get("APP_CONFIG", "config.yml")
         resolved_path = get_resource_path(config_file)
+        logger.info(f"Loading settings from config file: {resolved_path}")
         self._config: Dict[str, Any] = self._load_yaml(resolved_path)
         self._parse()
 
@@ -47,7 +51,10 @@ class Settings:
         """
         full_path = Path(path)
         if not full_path.exists():
+            logger.error(f"Config file not found: {full_path.resolve()}")
             raise FileNotFoundError(f"Config file not found: {full_path.resolve()}")
+
+        logger.debug(f"Reading config YAML: {full_path.resolve()}")
         with open(full_path, "r", encoding="utf-8") as f:
             return yaml.safe_load(f)
 
@@ -60,6 +67,11 @@ class Settings:
         self.IB_PORT: int = int(ib.get("port", 7497))
         self.IB_CLIENT_ID: int = int(ib.get("client_id", 1))
         self.LOG_LEVEL: str = str(logging_cfg.get("level", "INFO")).upper()
+
+        logger.info(f"IB_HOST set to {self.IB_HOST}")
+        logger.info(f"IB_PORT set to {self.IB_PORT}")
+        logger.info(f"IB_CLIENT_ID set to {self.IB_CLIENT_ID}")
+        logger.info(f"LOG_LEVEL set to {self.LOG_LEVEL}")
 
 
 # Lazy-loaded singleton instance
