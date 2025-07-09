@@ -1,0 +1,29 @@
+[project]
+name = "ibkr-web-api"
+version = "0.1.0"
+description = "Flask API for handling IBKR endpoints"
+authors = [
+    {name = "DanielGMorena",email = "danielgdelamorena@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "requests (>=2.32.4,<3.0.0)",
+    "flask (>=3.1.1,<4.0.0)",
+    "pyyaml (>=6.0.2,<7.0.0)",
+    "python-dotenv (>=1.1.1,<2.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.4.1"
+ruff = "^0.12.2"
+pytest-cov = "^6.2.1"
+
+[tool.pytest.ini_options]
+addopts = "--cov=app --cov-report=term-missing"
+testpaths = ["tests"]

@@ -1,0 +1,6 @@
+ib:
+  host: localhost
+  port: 7497
+
+logging:
+  level: DEBUG
