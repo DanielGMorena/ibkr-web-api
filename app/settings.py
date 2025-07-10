@@ -15,29 +15,22 @@ class Settings:
     """
     Application configuration loader.
 
-    Loads settings from a YAML file and exposes them as typed attributes.
-
-    Attributes:
-        IB_HOST (str): Host for IBKR TWS or Gateway.
-        IB_PORT (int): Port number for the IBKR API.
-        IB_CLIENT_ID (int): Client ID for the IB API session.
-        LOG_LEVEL (str): Logging level (e.g., "DEBUG", "INFO").
+    Loads all settings into a single flat dictionary for flexible access.
     """
 
-    def __init__(self, config_path: str = None):
+    def __init__(self, config_path: Optional[str] = None):
         """
         Initialize the settings from a YAML config file.
 
         Args:
-            config_path (str, optional): Path to the YAML config file.
+            config_path (Optional[str]): Path to the YAML config file.
                 Defaults to 'config.yml' or the path set in the APP_CONFIG environment variable.
         """
         load_dotenv()
         config_file = config_path or os.environ.get("APP_CONFIG", "config.yml")
         resolved_path = get_resource_path(config_file)
         logger.info(f"Loading settings from config file: {resolved_path}")
-        self._config: Dict[str, Any] = self._load_yaml(resolved_path)
-        self._parse()
+        self.config: Dict[str, Any] = self._load_yaml(resolved_path)
 
     def _load_yaml(self, path: str) -> Dict[str, Any]:
         """
@@ -58,20 +51,29 @@ class Settings:
         with open(full_path, "r", encoding="utf-8") as f:
             return yaml.safe_load(f)
 
-    def _parse(self) -> None:
-        """Parse and assign config values to attributes with type enforcement."""
-        ib = self._config.get("ib", {})
-        logging_cfg = self._config.get("logging", {})
+    def get(self, key: str, default: Any = None) -> Any:
+        """
+        Retrieve a top-level config value by key.
 
-        self.IB_HOST: str = str(ib.get("host", "127.0.0.1"))
-        self.IB_PORT: int = int(ib.get("port", 7497))
-        self.IB_CLIENT_ID: int = int(ib.get("client_id", 1))
-        self.LOG_LEVEL: str = str(logging_cfg.get("level", "INFO")).upper()
+        Args:
+            key (str): The top-level key to retrieve.
+            default (Any): Default value if key is not found.
 
-        logger.info(f"IB_HOST set to {self.IB_HOST}")
-        logger.info(f"IB_PORT set to {self.IB_PORT}")
-        logger.info(f"IB_CLIENT_ID set to {self.IB_CLIENT_ID}")
-        logger.info(f"LOG_LEVEL set to {self.LOG_LEVEL}")
+        Returns:
+            Any: The value from the config dictionary.
+        """
+        return self.config.get(key, default)
+
+    def __getitem__(self, key: str) -> Any:
+        """Allows dict-style access: settings['ib']"""
+        return self.config[key]
+
+    def __contains__(self, key: str) -> bool:
+        """Allow `in` checks like 'ib' in settings"""
+        return key in self.config
+
+    def __repr__(self) -> str:
+        return f"Settings({self.config})"
 
 
 # Lazy-loaded singleton instance

@@ -1,18 +1,21 @@
-from flask import Flask
+from fastapi import FastAPI
 
-from app.api import register_blueprints
+from app.api import register_routers
 
 
-def create_app() -> Flask:
+def create_app() -> FastAPI:
     """
-    Create and configure the Flask application.
+    Create and configure the FastAPI application.
 
-    This function initializes the Flask app, registers all blueprints,
-    and returns the app instance for use by a WSGI/ASGI server or main entrypoint.
+    This function initializes the FastAPI app, registers all routers,
+    and returns the app instance for use by an ASGI server like Uvicorn.
 
     Returns:
-        Flask: A configured Flask application instance.
+        FastAPI: A configured FastAPI application instance.
     """
-    app: Flask = Flask(__name__)
-    register_blueprints(app)
+    app = FastAPI()
+    register_routers(app)
     return app
+
+
+app = create_app()

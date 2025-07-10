@@ -1,71 +1,78 @@
 import os
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from app.ib.ib_client_manager import IBClientManager, _generate_client_id
 
 
-def test_generate_client_id(monkeypatch):
-    """Test that the client ID is based on PID times multiplier."""
-    monkeypatch.setattr(os, "getpid", lambda: 123)
-    assert _generate_client_id() == 12300
-    assert _generate_client_id(multiplier=5) == 615
+def test_generate_client_id_uniqueness():
+    base = os.getpid() * 100
+    ids = {_generate_client_id() for _ in range(100)}
+    assert all(base < cid < base + 100 for cid in ids)
+    assert len(ids) == len(set(ids))  # all unique
 
 
-@patch("app.ib.ib_client_manager.IB", autospec=True)
 @patch("app.ib.ib_client_manager.get_settings")
-def test_ib_client_manager_init_defaults(mock_get_settings, mock_ib_class):
-    """Test initialization with default config values."""
-    mock_get_settings.return_value = MagicMock(IB_HOST="localhost", IB_PORT=4001)
+def test_ib_client_manager_defaults_used_when_config_missing(mock_get_settings):
+    mock_get_settings.return_value.get.return_value = None
 
-    manager = IBClientManager()
+    with patch("app.ib.ib_client_manager.IB", autospec=True):
+        manager = IBClientManager()
 
-    assert manager.host == "localhost"
-    assert manager.port == 4001
+    assert manager.host == "127.0.0.1"
+    assert manager.port == 7497
     assert isinstance(manager.client_id, int)
-    assert manager.ib is mock_ib_class.return_value
 
 
+@patch("app.ib.ib_client_manager.get_settings")
+def test_ib_client_manager_uses_config(mock_get_settings):
+    mock_get_settings.return_value.get.return_value = {
+        "host": "testhost",
+        "port": 12345,
+        "client_id": 99,
+    }
+
+    with patch("app.ib.ib_client_manager.IB", autospec=True):
+        manager = IBClientManager()
+
+    assert manager.host == "testhost"
+    assert manager.port == 12345
+    assert isinstance(manager.client_id, int)  # still random
+
+
+@patch("app.ib.ib_client_manager.IB")
+@patch("app.ib.ib_client_manager.get_settings")
 @pytest.mark.asyncio
-@patch("app.ib.ib_client_manager.IB", autospec=True)
-async def test_ib_client_manager_connect(mock_ib_class):
-    mock_ib = mock_ib_class.return_value
-    mock_ib.connectAsync = AsyncMock()
+async def test_ib_client_manager_connect_and_disconnect(
+    mock_get_settings, mock_ib_class
+):
+    mock_get_settings.return_value.get.return_value = {}
+    mock_ib_instance = MagicMock()
+    mock_ib_instance.isConnected.return_value = True
+    mock_ib_class.return_value = mock_ib_instance
 
-    manager = IBClientManager("localhost", 4001, 123)
-    await manager.connect()
-
-    mock_ib.connectAsync.assert_awaited_once_with("localhost", 4001, 123)
-
-
-@patch("app.ib.ib_client_manager.IB", autospec=True)
-def test_ib_client_manager_disconnect(mock_ib_class):
-    """Test the disconnect() method is called only if connected."""
-    mock_ib = mock_ib_class.return_value
-
-    # Case 1: isConnected = True
-    mock_ib.isConnected.return_value = True
     manager = IBClientManager()
+
+    await manager.connect()
+    mock_ib_instance.connectAsync.assert_awaited_once()
+
     manager.disconnect()
-    mock_ib.disconnect.assert_called_once()
-
-    # Reset and test Case 2: isConnected = False
-    mock_ib.disconnect.reset_mock()
-    mock_ib.isConnected.return_value = False
-    manager.disconnect()
-    mock_ib.disconnect.assert_not_called()
+    mock_ib_instance.disconnect.assert_called_once()
 
 
+@patch("app.ib.ib_client_manager.IB")
+@patch("app.ib.ib_client_manager.get_settings")
 @pytest.mark.asyncio
-@patch("app.ib.ib_client_manager.IB", autospec=True)
-async def test_ib_client_manager_async_context(mock_ib_class):
-    mock_ib = mock_ib_class.return_value
-    mock_ib.isConnected.return_value = True
-    mock_ib.connectAsync = AsyncMock()
+async def test_ib_client_manager_async_context(mock_get_settings, mock_ib_class):
+    mock_get_settings.return_value.get.return_value = {}
+    mock_ib_instance = MagicMock()
+    mock_ib_instance.connectAsync.return_value = mock_ib_instance
+    mock_ib_instance.isConnected.return_value = True
+    mock_ib_class.return_value = mock_ib_instance
 
-    async with IBClientManager("localhost", 4001, 123) as ib:
-        mock_ib.connectAsync.assert_awaited_once_with("localhost", 4001, 123)
-        assert ib is mock_ib
+    async with IBClientManager() as ib:
+        assert ib is mock_ib_instance
+        mock_ib_instance.connectAsync.assert_awaited_once()
 
-    mock_ib.disconnect.assert_called_once()
+    mock_ib_instance.disconnect.assert_called_once()

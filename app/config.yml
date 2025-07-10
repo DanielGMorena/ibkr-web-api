@@ -4,3 +4,11 @@ ib:
 
 logging:
   level: DEBUG
+
+fastapi:
+  title: IBKR Web API
+  description: RESTful API for accessing Interactive Brokers historical market data
+  docs_url: /docs
+  redoc_url: /redoc
+  openapi_url: /openapi.json
+  debug: false

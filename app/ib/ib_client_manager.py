@@ -1,6 +1,7 @@
 import logging
 import os
-from typing import Optional
+import random
+from typing import Any, Dict, Optional
 
 from ib_insync import IB
 
@@ -9,18 +10,21 @@ from app.settings import get_settings
 logger = logging.getLogger(__name__)
 
 
-def _generate_client_id(multiplier: int = 100) -> int:
+def _generate_client_id(multiplier: int = 100, offset_range: int = 50) -> int:
     """
-    Generate a unique client ID based on the process ID.
+    Generate a unique client ID based on the process ID and a random offset.
 
     Args:
-        multiplier (int): Multiplier to ensure distinct client ID space.
+        multiplier (int): Base multiplier for PID.
+        offset_range (int): Range of random offset to avoid collisions in same process.
 
     Returns:
-        int: A unique client ID.
+        int: A pseudo-unique client ID.
     """
-    client_id = os.getpid() * multiplier
-    logger.debug(f"Generated client ID: {client_id}")
+    base = os.getpid() * multiplier
+    offset = random.randint(1, offset_range)
+    client_id = base + offset
+    logger.debug(f"Generated client ID: {client_id} (base={base}, offset={offset})")
     return client_id
 
 
@@ -40,7 +44,6 @@ class IBClientManager:
         self,
         host: Optional[str] = None,
         port: Optional[int] = None,
-        client_id: Optional[int] = None,
     ) -> None:
         """
         Initialize the client manager.
@@ -48,13 +51,23 @@ class IBClientManager:
         Args:
             host (Optional[str]): IB host. Defaults to settings.
             port (Optional[int]): IB port. Defaults to settings.
-            client_id (Optional[int]): Client ID. Defaults to PID-based generator.
         """
-        settings = get_settings()
-        self.host = host or settings.IB_HOST
-        self.port = port or settings.IB_PORT
-        self.client_id = client_id or _generate_client_id()
+        settings = get_settings() or {}
+
+        ib_config: Dict[str, Any] = settings.get("ib", {})
+        self.host = host or ib_config.get("host")
+        if self.host is None:
+            self.host = "127.0.0.1"
+            logger.warning("No IB host specified; using default '127.0.0.1'")
+
+        self.port = port or ib_config.get("port")
+        if self.port is None:
+            self.port = 7497
+            logger.warning("No IB port specified; using default 7497")
+
+        self.client_id = _generate_client_id()
         self.ib = IB()
+
         logger.info(
             f"IBClientManager initialized with host={self.host}, port={self.port}, client_id={self.client_id}"
         )
