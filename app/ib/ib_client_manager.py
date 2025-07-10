@@ -1,7 +1,7 @@
 import logging
 import os
 import random
-from typing import Any, Dict, Optional
+from typing import Optional
 
 from ib_insync import IB
 
@@ -52,15 +52,15 @@ class IBClientManager:
             host (Optional[str]): IB host. Defaults to settings.
             port (Optional[int]): IB port. Defaults to settings.
         """
-        settings = get_settings() or {}
+        settings = get_settings()
 
-        ib_config: Dict[str, Any] = settings.get("ib", {})
-        self.host = host or ib_config.get("host")
+        ib_config = settings.ib
+        self.host = host or ib_config.host
         if self.host is None:
             self.host = "127.0.0.1"
             logger.warning("No IB host specified; using default '127.0.0.1'")
 
-        self.port = port or ib_config.get("port")
+        self.port = port or ib_config.port
         if self.port is None:
             self.port = 7497
             logger.warning("No IB port specified; using default 7497")

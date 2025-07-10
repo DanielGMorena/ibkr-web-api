@@ -1,0 +1,15 @@
+ib:
+  host: 127.0.0.1
+  port: 7497
+
+logging:
+  level: INFO
+
+fastapi:
+  title: Test App
+  description: Test Description
+  version: "1.0"
+  docs_url: /docs
+  redoc_url: /redoc
+  openapi_url: /openapi.json
+  debug: true
