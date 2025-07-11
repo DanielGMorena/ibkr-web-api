@@ -6,7 +6,7 @@ authors = [
     {name = "DanielGMorena",email = "danielgdelamorena@gmail.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.9,<3.14"
 dependencies = [
     "requests (>=2.32.4,<3.0.0)",
     "pyyaml (>=6.0.2,<7.0.0)",
@@ -41,3 +41,12 @@ pythonpath = ["."]
 filterwarnings = [
     "ignore::DeprecationWarning:eventkit.*"
 ]
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["pydantic.mypy"]
+strict = true
+ignore_missing_imports = true
+warn_return_any = true
+warn_unused_configs = true
+files = ["app", "tests"]

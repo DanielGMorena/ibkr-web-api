@@ -57,6 +57,13 @@ class _FastAPISettings(BaseSettings):
     debug: bool = False
 
 
+class _UvicornSettings(BaseSettings):
+    """Settings for Uvicorn server configuration."""
+
+    host: Optional[str] = "127.0.0.1"
+    port: Optional[int] = 8000
+
+
 class AppSettings(BaseSettings):
     """
     Application-wide settings object.
@@ -67,6 +74,7 @@ class AppSettings(BaseSettings):
     ib: _IBSettings
     logging: _LoggingSettings
     fastapi: _FastAPISettings
+    uvicorn: _UvicornSettings
 
     model_config = {
         "env_prefix": "",
@@ -86,6 +94,6 @@ def get_settings(config_path: Optional[str] = None) -> AppSettings:
     Returns:
         AppSettings: The application's settings object.
     """
-    resolved_path = config_path or os.getenv("APP_CONFIG", "config.yml")
+    resolved_path = config_path or os.getenv("APP_CONFIG", "app/config.yml")
     config_dict = _load_config_yaml(resolved_path)
     return AppSettings(**config_dict)
