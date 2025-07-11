@@ -1,5 +1,6 @@
 import os
 import tempfile
+from pathlib import Path
 
 import pytest
 
@@ -22,6 +23,10 @@ fastapi:
   redoc_url: /test-redoc
   openapi_url: /test-openapi.json
   debug: true
+
+uvicorn:
+  host: 127.0.0.1
+  port: 8000
 """
 
 
@@ -47,22 +52,25 @@ def test_load_config_yaml_file_not_found():
         _load_config_yaml("non_existent_config.yml")
 
 
-def test_get_settings_loads_correct_values(temp_config_file):
-    # Clear lru_cache to force reloading from file
+def test_get_settings_loads_correct_values(temp_config_file, monkeypatch):
+    # Clear lru_cache
     get_settings.cache_clear()
+
+    # Patch get_resource_path to return the actual path directly
+    monkeypatch.setattr("app.settings.get_resource_path", lambda p: Path(p))
 
     settings = get_settings(config_path=temp_config_file)
     assert isinstance(settings, AppSettings)
-
     assert settings.ib.host == "test-host"
     assert settings.ib.port == 1234
     assert settings.fastapi.title == "Test API"
     assert settings.logging.level == "WARNING"
 
 
-def test_get_settings_is_cached(temp_config_file):
+def test_get_settings_is_cached(temp_config_file, monkeypatch):
     get_settings.cache_clear()
-    settings_1 = get_settings(config_path=temp_config_file)
-    settings_2 = get_settings(config_path=temp_config_file)  # reuse same path
+    monkeypatch.setattr("app.settings.get_resource_path", lambda p: Path(p))
 
+    settings_1 = get_settings(config_path=temp_config_file)
+    settings_2 = get_settings(config_path=temp_config_file)
     assert settings_1 is settings_2

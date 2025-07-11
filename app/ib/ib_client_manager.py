@@ -1,7 +1,7 @@
 import logging
 import os
 import random
-from typing import Optional
+from typing import Optional, Type
 
 from ib_insync import IB
 
@@ -66,7 +66,7 @@ class IBClientManager:
             logger.warning("No IB port specified; using default 7497")
 
         self.client_id = _generate_client_id()
-        self.ib = IB()
+        self.ib = IB()  # type: ignore
 
         logger.info(
             f"IBClientManager initialized with host={self.host}, port={self.port}, client_id={self.client_id}"
@@ -90,7 +90,7 @@ class IBClientManager:
         """Disconnect from IB server if connected."""
         if self.ib.isConnected():
             logger.info("Disconnecting from IB server")
-            self.ib.disconnect()
+            self.ib.disconnect()  # type: ignore
             logger.info("Disconnected from IB server")
         else:
             logger.debug("IB client already disconnected")
@@ -100,7 +100,12 @@ class IBClientManager:
         logger.debug("Entering IBClientManager context")
         return await self.connect()
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[object],
+    ) -> None:
         """Exit the context manager and clean up."""
         logger.debug("Exiting IBClientManager context")
         self.disconnect()

@@ -1,34 +1,38 @@
 import os
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Optional, Union
 
 import yaml
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
 
+from app.utils.files import get_resource_path
+
 # Load environment variables from a .env file if present
 load_dotenv()
 
 
-def _load_config_yaml(file_path: str) -> Dict[str, Any]:
+def _load_config_yaml(file_path: Union[Path, str]) -> Any:
     """
     Load and parse a YAML configuration file.
 
     Args:
-        file_path (str): Path to the YAML config file.
+        file_path (Union[Path, str]): Path to the YAML config file.
 
     Returns:
         dict: Parsed YAML configuration as a dictionary.
 
     Raises:
         FileNotFoundError: If the file does not exist.
+        yaml.YAMLError: If the YAML is invalid.
     """
-    path = Path(file_path)
+    path = Path(file_path) if isinstance(file_path, str) else file_path
+
     if not path.exists():
         raise FileNotFoundError(f"Config file not found: {path.resolve()}")
 
-    with open(path, "r", encoding="utf-8") as f:
+    with path.open("r", encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
@@ -60,8 +64,8 @@ class _FastAPISettings(BaseSettings):
 class _UvicornSettings(BaseSettings):
     """Settings for Uvicorn server configuration."""
 
-    host: Optional[str] = "127.0.0.1"
-    port: Optional[int] = 8000
+    host: str = "127.0.0.1"
+    port: int = 8000
 
 
 class AppSettings(BaseSettings):
@@ -86,14 +90,13 @@ class AppSettings(BaseSettings):
 def get_settings(config_path: Optional[str] = None) -> AppSettings:
     """
     Load and return a singleton instance of AppSettings.
-
-    Args:
-        config_path (Optional[str]): Optional path to a YAML config file.
-            Defaults to the value in APP_CONFIG env var, or 'config.yml'.
-
-    Returns:
-        AppSettings: The application's settings object.
     """
-    resolved_path = config_path or os.getenv("APP_CONFIG", "app/config.yml")
-    config_dict = _load_config_yaml(resolved_path)
+    raw_path: Optional[str] = config_path or os.getenv("APP_CONFIG", "app/config.yml")
+
+    if raw_path is None:
+        raise ValueError("No config path provided and APP_CONFIG is not set")
+
+    resolved_path: str = raw_path  # Now it's guaranteed to be str
+    resource_path = get_resource_path(resolved_path)
+    config_dict = _load_config_yaml(resource_path)
     return AppSettings(**config_dict)
