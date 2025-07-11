@@ -57,6 +57,8 @@ async def get_hist_market_data(
 
             return [bar.__dict__ for bar in bars]
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception("Failed to fetch historical market data")
         raise HTTPException(status_code=500, detail=str(e))

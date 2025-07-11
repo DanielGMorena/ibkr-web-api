@@ -6,9 +6,9 @@ logging:
   level: INFO
 
 fastapi:
-  title: Test App
-  description: Test Description
-  version: "1.0"
+  title: Test API
+  description: API for testing
+  version: "0.1.0"
   docs_url: /docs
   redoc_url: /redoc
   openapi_url: /openapi.json

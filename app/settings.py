@@ -68,9 +68,10 @@ class AppSettings(BaseSettings):
     logging: _LoggingSettings
     fastapi: _FastAPISettings
 
-    class Config:
-        env_prefix = ""
-        env_nested_delimiter = "__"
+    model_config = {
+        "env_prefix": "",
+        "env_nested_delimiter": "__",
+    }
 
 
 @lru_cache()
