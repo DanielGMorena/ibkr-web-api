@@ -95,19 +95,12 @@ jobs:
             Write-Host "Tag $tag already exists. Skipping tag creation."
           }
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+      - name: Create GitHub Release and Upload EXE
+        uses: ncipollo/release-action@v1
         with:
-          tag_name: ${{ steps.get_version.outputs.version }}
+          tag: ${{ steps.get_version.outputs.version }}
           name: IBKR Web API ${{ steps.get_version.outputs.version }}
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload EXE to GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: dist/ibkr-web-api.exe
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          body: |
+            Automatically generated release for version ${{ steps.get_version.outputs.version }}
+          artifacts: "dist/ibkr-web-api.exe"
+          token: ${{ secrets.GITHUB_TOKEN }}
