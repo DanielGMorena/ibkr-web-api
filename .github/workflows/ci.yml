@@ -71,6 +71,19 @@ jobs:
           name: ibkr-web-api-exe
           path: dist/ibkr-web-api.exe
 
+      - name: Extract version from pyproject.toml
+        id: get_version
+        run: |
+          VERSION=$(poetry version -s)
+          echo "version=v$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Create Git tag
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git tag ${{ steps.get_version.outputs.version }}
+          git push origin ${{ steps.get_version.outputs.version }}
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
