@@ -1,0 +1,56 @@
+name: Build Windows Executable
+
+on:
+  workflow_run:
+    workflows: ["Lint and Test"]
+    types:
+      - completed
+  workflow_dispatch:
+
+jobs:
+  build-exe:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        run: |
+          pip install poetry
+          poetry config virtualenvs.create false
+          poetry install --no-interaction --with dev
+
+      - name: Install PyInstaller
+        run: pip install pyinstaller
+
+      - name: Build executable
+        run: pyinstaller config/pyinstaller.spec
+
+      - name: Archive executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: ibkr-web-api-exe
+          path: dist/ibkr-web-api.exe
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: IBKR Web API v1.0.${{ github.run_number }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload EXE to GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/ibkr-web-api.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
