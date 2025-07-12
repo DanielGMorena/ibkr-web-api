@@ -1,14 +1,11 @@
-Here’s a rewritten `README.md` tailored to your goals — clearly emphasizing:
-
-* The `.exe` as the main entry point for end users.
-* How to pass a `--config` path.
-* Localhost usage with TWS.
-* Config file structure.
-
----
-
-````markdown
 # 📈 IBKR Web API
+
+![Build](https://github.com/danielgmorena/ibkr-web-api/actions/workflows/ci.yml/badge.svg)
+![Linted with Ruff](https://img.shields.io/badge/lint-Ruff-%2300bcd4?logo=python&logoColor=white)
+![Typed with Mypy](https://img.shields.io/badge/types-Mypy-%232d3f50)
+![License](https://img.shields.io/github/license/danielgmorena/ibkr-web-api)
+![Platform](https://img.shields.io/badge/platform-Windows-blue.svg)
+
 
 An easy-to-use **local web API** for accessing **Interactive Brokers (IBKR)** using [`ib_insync`](https://github.com/erdewit/ib_insync). Designed for end users to run a standalone executable (`ibkr-web-api.exe`) and interact with their local **IB TWS or IB Gateway** instance via HTTP calls.
 
