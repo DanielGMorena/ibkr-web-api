@@ -83,19 +83,24 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
-      - name: Create and push tag if not exists
+      - name: Check if tag exists and create it if not
+        id: tag_check
         shell: pwsh
         run: |
           $tag = "${{ steps.get_version.outputs.version }}"
-          $tagExists = git tag --list $tag
-          if (-not $tagExists) {
+          $exists = git ls-remote --tags origin $tag
+
+          if (-not $exists) {
             git tag $tag
             git push origin $tag
+            echo "created=true" >> $env:GITHUB_OUTPUT
           } else {
-            Write-Host "Tag $tag already exists. Skipping tag creation."
+            echo "Tag $tag already exists. Skipping creation."
+            echo "created=false" >> $env:GITHUB_OUTPUT
           }
 
       - name: Create GitHub Release and Upload EXE
+        if: steps.tag_check.outputs.created == 'true'
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.get_version.outputs.version }}

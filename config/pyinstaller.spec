@@ -1,6 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 from pathlib import Path
+from PyInstaller.utils.hooks import collect_data_files
 
 # Absolute path to config file for clarity
 config_file = Path("..") / "app" / "config.yml"
@@ -9,7 +10,7 @@ a = Analysis(
     ['..\\app\\run_server.py'],
     pathex=[],
     binaries=[],
-    datas=[(str(config_file), 'app')],
+    datas=collect_data_files("tzdata") + [(str(config_file), 'app')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
