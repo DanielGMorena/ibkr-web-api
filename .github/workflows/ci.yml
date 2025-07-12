@@ -74,8 +74,8 @@ jobs:
       - name: Extract version from pyproject.toml
         id: get_version
         run: |
-          VERSION=$(poetry version -s)
-          echo "version=v$VERSION" >> "$GITHUB_OUTPUT"
+          $version = (poetry version -s).Trim()
+          echo "version=v$version" >> $env:GITHUB_OUTPUT
 
       - name: Create Git tag
         run: |
